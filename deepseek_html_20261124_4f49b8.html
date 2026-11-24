@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emergent Language · EN↔RU Flashcards</title>
+<style>
+  :root{
+    --bg:#0b0e1a;
+    --panel:#141a2e;
+    --line:rgba(255,255,255,.09);
+    --txt:#e8ecf6;
+    --muted:#9aa4c0;
+    --accent:#7c5cff;
+    --accent-2:#22d3ee;
+    --ok:#2ee6a8;
+    --bad:#ff5d6c;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:0 16px 70px;
+    font-family:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;
+    color:var(--txt);
+    background:
+      radial-gradient(900px 520px at 8% -12%, rgba(124,92,255,.38), transparent 60%),
+      radial-gradient(820px 440px at 96% 0%, rgba(34,211,238,.22), transparent 55%),
+      var(--bg);
+    min-height:100vh;
+  }
+  header{max-width:900px;margin:0 auto;padding:28px 0 6px;text-align:center}
+  h1{
+    margin:0 0 6px;font-size:clamp(1.4rem,3.6vw,2.1rem);letter-spacing:.3px;
+    background:linear-gradient(90deg,#c9b8ff,#7c5cff 40%,#22d3ee);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  header p{margin:0;color:var(--muted);font-size:.92rem}
+
+  /* Deck switcher */
+  .deck-switch{display:flex;justify-content:center;gap:8px;margin:16px 0 4px;flex-wrap:wrap}
+  .deck-btn{
+    border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);
+    padding:9px 18px;border-radius:999px;font-size:.84rem;font-weight:700;cursor:pointer;
+    transition:.2s;
+  }
+  .deck-btn:hover{color:var(--txt);border-color:rgba(124,92,255,.5)}
+  .deck-btn.active{
+    background:linear-gradient(135deg,var(--accent),#5a3ff0);color:#fff;border-color:transparent;
+    box-shadow:0 8px 24px -10px rgba(124,92,255,.9);
+  }
+
+  /* Tabs */
+  .tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:18px auto 26px;max-width:900px}
+  .tab{
+    border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);
+    padding:10px 16px;border-radius:999px;font-size:.88rem;font-weight:600;cursor:pointer;
+    transition:.22s;
+  }
+  .tab:hover{color:var(--txt);border-color:rgba(124,92,255,.5)}
+  .tab.active{
+    color:#fff;border-color:transparent;
+    background:linear-gradient(135deg,var(--accent),#5a3ff0);
+    box-shadow:0 8px 24px -8px rgba(124,92,255,.9);
+  }
+
+  .panel{display:none;max-width:900px;margin:0 auto;animation:fade .3s ease}
+  .panel.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* Flash cards */
+  .scene{
+    perspective:1500px;height:clamp(340px,48vh,420px);
+    max-width:620px;margin:0 auto;
+  }
+  .card{
+    position:relative;width:100%;height:100%;cursor:pointer;
+    transform-style:preserve-3d;transition:transform .62s cubic-bezier(.45,.05,.2,1);
+  }
+  .card.flipped{transform:rotateY(180deg)}
+  .face{
+    position:absolute;inset:0;border-radius:22px;padding:26px;
+    backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    display:flex;flex-direction:column;justify-content:center;
+    box-shadow:0 26px 50px -24px rgba(0,0,0,.9);
+  }
+  .front{
+    align-items:center;text-align:center;
+    background:linear-gradient(150deg,#2b2358,#141a2e 70%);
+    border:1px solid rgba(124,92,255,.45);
+  }
+  .front .term{
+    font-size:clamp(1.45rem,4.4vw,2.05rem);font-weight:800;letter-spacing:.3px;
+    line-height:1.25;max-width:100%;word-wrap:break-word;
+  }
+  .front .pos{
+    margin-top:14px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--accent-2);border:1px solid rgba(34,211,238,.4);
+    padding:4px 12px;border-radius:999px;
+  }
+  .front .hint{
+    position:absolute;bottom:16px;font-size:.74rem;color:var(--muted);letter-spacing:.06em;
+  }
+  .back{
+    transform:rotateY(180deg);justify-content:center;text-align:left;overflow-y:auto;
+    background:linear-gradient(150deg,#0f3340,#12162a 75%);
+    border:1px solid rgba(34,211,238,.4);
+  }
+  .back .answer{
+    font-size:1.28rem;font-weight:800;color:#c9b8ff;line-height:1.35;
+    margin-bottom:10px;word-wrap:break-word;
+  }
+  .back .def{font-size:.92rem;line-height:1.55;font-weight:600;color:#dfe6ff;opacity:.9}
+  .back .ex{
+    margin-top:12px;font-size:.88rem;line-height:1.55;color:#bfe9f3;font-style:italic;
+  }
+  .back .tip{
+    margin-top:12px;font-size:.78rem;line-height:1.5;color:var(--muted);
+    border-left:3px solid var(--accent);padding-left:10px;
+  }
+  .controls{display:flex;gap:10px;justify-content:center;align-items:center;margin-top:20px;flex-wrap:wrap}
+  button.btn{
+    border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--txt);
+    padding:10px 18px;border-radius:12px;font-size:.86rem;font-weight:600;cursor:pointer;
+    transition:.2s;
+  }
+  button.btn:hover{background:rgba(124,92,255,.22);border-color:rgba(124,92,255,.6)}
+  button.btn.primary{
+    background:linear-gradient(135deg,var(--accent),#5a3ff0);border-color:transparent;
+  }
+  .counter{
+    min-width:86px;text-align:center;font-variant-numeric:tabular-nums;
+    color:var(--muted);font-size:.86rem;font-weight:600;
+  }
+
+  /* Shared box */
+  .box{
+    background:var(--panel);border:1px solid var(--line);border-radius:20px;
+    padding:22px;box-shadow:0 22px 46px -30px rgba(0,0,0,.9);
+  }
+  .box h2{margin:0 0 4px;font-size:1.12rem}
+  .box .sub{margin:0 0 18px;color:var(--muted);font-size:.85rem;line-height:1.5}
+
+  /* Activity 1 */
+  .match-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .match-col{display:flex;flex-direction:column;gap:10px}
+  .m-item{
+    text-align:left;border:1px solid var(--line);background:rgba(255,255,255,.045);
+    color:var(--txt);padding:12px 14px;border-radius:12px;font-size:.86rem;line-height:1.4;
+    cursor:pointer;transition:.18s;font-family:inherit;
+  }
+  .m-item:hover:not(.matched){border-color:rgba(124,92,255,.65);background:rgba(124,92,255,.14)}
+  .m-item.sel{border-color:var(--accent-2);background:rgba(34,211,238,.16);box-shadow:0 0 0 2px rgba(34,211,238,.3) inset}
+  .m-item.wrong{border-color:var(--bad);background:rgba(255,93,108,.18);animation:shake .35s}
+  .m-item.matched{
+    border-color:rgba(46,230,168,.55);background:rgba(46,230,168,.13);
+    color:#9df3d6;cursor:default;opacity:.75;
+  }
+  .m-item.matched::after{content:" ✓";color:var(--ok);font-weight:800}
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    25%{transform:translateX(-6px)}
+    75%{transform:translateX(6px)}
+  }
+  .match-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px;flex-wrap:wrap}
+  .score{font-size:.86rem;font-weight:700;color:var(--accent-2)}
+
+  /* Activity 2 */
+  .bank{
+    display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;
+    padding:14px;border-radius:14px;background:rgba(124,92,255,.1);
+    border:1px dashed rgba(124,92,255,.4);
+  }
+  .bank span{
+    font-size:.8rem;font-weight:700;padding:5px 11px;border-radius:999px;
+    background:rgba(255,255,255,.07);border:1px solid var(--line);
+  }
+  .gap{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px;margin-bottom:6px;font-size:.95rem;line-height:1.9}
+  .gap .num{color:var(--muted);font-size:.78rem;font-weight:700;min-width:22px}
+  .gap input{
+    font-family:inherit;font-size:.95rem;color:var(--txt);background:rgba(255,255,255,.06);
+    border:1px solid var(--line);border-bottom:2px solid var(--accent);
+    border-radius:8px;padding:5px 10px;width:150px;outline:none;transition:.2s;
+  }
+  .gap input:focus{border-color:var(--accent-2);background:rgba(34,211,238,.1)}
+  .gap input.correct{border-color:var(--ok);background:rgba(46,230,168,.14);color:#9df3d6}
+  .gap input.incorrect{border-color:var(--bad);background:rgba(255,93,108,.14);color:#ffc3c9}
+  .gap-ru{
+    display:none;margin:0 0 14px 32px;font-size:.8rem;color:#9aa4c0;font-style:italic;
+    line-height:1.5;
+  }
+  .feedback{margin-top:14px;font-size:.9rem;font-weight:700;color:var(--accent-2);min-height:22px}
+
+  @media (max-width:620px){
+    .match-grid{grid-template-columns:1fr}
+    .match-col:first-child{margin-bottom:4px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Emergent Language · EN ↔ RU Flashcards</h1>
+  <p>Fortune · tension · difficult personalities · alien invasions · braids</p>
+  <div class="deck-switch">
+    <button class="deck-btn active" id="deckEnRu">🇬🇧 English → Russian 🇷🇺</button>
+    <button class="deck-btn" id="deckRuEn">🇷🇺 Russian → English 🇬🇧</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-panel="p-cards">📇 Flash cards</button>
+  <button class="tab" data-panel="p-match">🔗 Activity 1 · Match</button>
+  <button class="tab" data-panel="p-gap">✍️ Activity 2 · Gap fill</button>
+</nav>
+
+<!-- ================= FLASH CARDS ================= -->
+<section class="panel active" id="p-cards">
+  <div class="scene">
+    <div class="card" id="card">
+      <div class="face front">
+        <div class="term" id="frontTerm">—</div>
+        <div class="pos" id="frontPos">—</div>
+        <div class="hint">Tap / click to flip</div>
+      </div>
+      <div class="face back">
+        <div class="answer" id="backAnswer"></div>
+        <div class="def" id="backDef"></div>
+        <div class="ex" id="backEx"></div>
+        <div class="tip" id="backTip"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="prevBtn">← Prev</button>
+    <span class="counter" id="counter">1 / 13</span>
+    <button class="btn" id="nextBtn">Next →</button>
+    <button class="btn" id="flipBtn">Flip</button>
+    <button class="btn primary" id="shuffleBtn">🔀 Shuffle</button>
+  </div>
+</section>
+
+<!-- ================= ACTIVITY 1 ================= -->
+<section class="panel" id="p-match">
+  <div class="box">
+    <h2>Activity 1 · Match the pairs</h2>
+    <p class="sub" id="matchSub">Click an item on the left, then its match on the right.</p>
+    <div class="match-grid">
+      <div class="match-col" id="matchLeft"></div>
+      <div class="match-col" id="matchRight"></div>
+    </div>
+    <div class="match-bar">
+      <span class="score" id="matchScore">0 / 11 matched</span>
+      <button class="btn" id="matchReset">🔄 Play again</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ACTIVITY 2 ================= -->
+<section class="panel" id="p-gap">
+  <div class="box">
+    <h2>Activity 2 · Complete the sentences</h2>
+    <p class="sub">Type one word in each gap. <strong>Bear</strong> is used twice.</p>
+
+    <div class="bank" id="wordBank"></div>
+    <div id="gapList"></div>
+
+    <div class="match-bar">
+      <button class="btn primary" id="checkBtn">✔ Check answers</button>
+      <button class="btn" id="showBtn">👁 Show answers</button>
+      <button class="btn" id="gapReset">🔄 Reset</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+</section>
+
+<script>
+/* =========================================================
+   1. CARD DATA (English + Russian)
+   ========================================================= */
+const CARDS = [
+  {
+    term: "fortune", pos: "noun",
+    def: "Luck, or a prediction about your future. Also: a very large amount of money.",
+    ex: "She made a fortune selling handmade jewellery. · The fortune teller told my fortune.",
+    tip: "Collocations: make a fortune · cost a fortune · tell sb's fortune",
+    ru: "удача; состояние; предсказание"
+  },
+  {
+    term: "fortune teller", pos: "noun phrase",
+    def: "A person who claims they can see the future, often using cards, palms or a crystal ball.",
+    ex: "The fortune teller looked at my palm and said I'd travel far.",
+    tip: "Also: fortune-telling (n.) · a fortune-telling booth at the fair",
+    ru: "гадалка, предсказатель судьбы"
+  },
+  {
+    term: "tension", pos: "noun",
+    def: "1) A nervous, uncomfortable feeling between people. 2) The state of being pulled tight.",
+    ex: "There was real tension in the room before the results came out. · He could feel the tension in his shoulders.",
+    tip: "Collocations: ease the tension · create tension · a tension headache",
+    ru: "напряжение"
+  },
+  {
+    term: "tensed (up)", pos: "verb / adjective",
+    def: "Became stiff and nervous; your muscles went tight.",
+    ex: "I tensed up the second I heard the door open. · Her shoulders were tensed.",
+    tip: "tensed = past simple or adjective · tense (adj.) = nervous, not relaxed",
+    ru: "напрягся, напряжённый"
+  },
+  {
+    term: "he's hard to deal with", pos: "expression",
+    def: "He is difficult to communicate with, work with or please.",
+    ex: "He's hard to deal with when he's stressed — everything turns into an argument.",
+    tip: "Similar: he's a handful · he's not easy to work with · he's difficult to handle",
+    ru: "с ним трудно иметь дело / сложно общаться"
+  },
+  {
+    term: "a difficult personality", pos: "noun phrase",
+    def: "A character that is not easy to get on with: demanding, stubborn, moody or very sensitive.",
+    ex: "She has a difficult personality, but she's brilliant at her job.",
+    tip: "Also: a difficult character · hard to get on with · hard work (informal)",
+    ru: "сложный характер"
+  },
+  {
+    term: "bear in mind", pos: "expression",
+    def: "Remember this and consider it when you make a decision.",
+    ex: "Bear in mind that the shop closes at six. · Bear in mind, this is only a first draft.",
+    tip: "= keep in mind. Formal: please bear in mind that…",
+    ru: "иметь в виду, учитывать"
+  },
+  {
+    term: "bear with me", pos: "expression",
+    def: "Be patient with me; give me a moment.",
+    ex: "Bear with me while I find the file. · Just bear with me for a second.",
+    tip: "Very common in meetings, phone calls and presentations. Polite and friendly.",
+    ru: "потерпите немного, будьте терпеливы"
+  },
+  {
+    term: "alien invasion of the planet", pos: "noun phrase",
+    def: "A scenario in which beings from space come to attack or take over Earth.",
+    ex: "The film is about an alien invasion of the planet. · In the story, the alien invasion starts in the desert.",
+    tip: "alien (n./adj.) · invasion (n.) · to invade (v.) · to take over",
+    ru: "вторжение инопланетян на планету"
+  },
+  {
+    term: "broadcast", pos: "verb / noun",
+    def: "To send out a programme on TV, radio or the internet. Also (n.): a programme that is sent out.",
+    ex: "The match will be broadcast live on Saturday. · It was a live broadcast from the stadium.",
+    tip: "Irregular: broadcast – broadcast – broadcast (no -ed).",
+    ru: "транслировать, трансляция"
+  },
+  {
+    term: "to braid hair", pos: "verb phrase",
+    def: "To twist hair into a plait (BrE) / braid (AmE).",
+    ex: "My sister taught me how to braid my hair. · She had her hair braided for the wedding.",
+    tip: "BrE: plait (n./v.) · AmE: braid · a braid = a plait",
+    ru: "заплетать волосы (в косу)"
+  },
+  {
+    term: "to get on someone's nerves", pos: "idiom",
+    def: "To annoy someone, often slowly and over a long period.",
+    ex: "He's nice, but he really gets on my nerves when he interrupts.",
+    tip: "Stronger: to drive someone crazy / mad · to irritate",
+    ru: "действовать кому-то на нервы"
+  },
+  {
+    term: "to walk on eggshells", pos: "idiom",
+    def: "To be very careful about what you say or do so you don't upset someone.",
+    ex: "Since the argument we've been walking on eggshells around him.",
+    tip: "Perfect for describing life with a difficult personality.",
+    ru: "ходить на цыпочках (перен.), быть очень осторожным"
+  }
+];
+
+/* =========================================================
+   2. DECK STATE
+   ========================================================= */
+let deck = "en-ru"; // 'en-ru' or 'ru-en'
+
+/* =========================================================
+   3. FLASH CARD LOGIC
+   ========================================================= */
+const cardEl    = document.getElementById("card");
+const frontTerm = document.getElementById("frontTerm");
+const frontPos  = document.getElementById("frontPos");
+const backAnswer = document.getElementById("backAnswer");
+const backDef   = document.getElementById("backDef");
+const backEx    = document.getElementById("backEx");
+const backTip   = document.getElementById("backTip");
+const counter   = document.getElementById("counter");
+
+let order = CARDS.map((_, i) => i);
+let idx = 0;
+
+function shuffle(a){
+  const arr = a.slice();
+  for (let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function renderCard(){
+  const c = CARDS[order[idx]];
+  const ruToEn = (deck === "ru-en");
+
+  // FRONT: English in EN→RU deck, Russian in RU→EN deck
+  frontTerm.textContent = ruToEn ? c.ru : c.term;
+  frontPos.textContent  = c.pos;
+
+  // BACK: the *other* language
+  backAnswer.textContent = ruToEn ? c.term : c.ru;
+
+  backDef.textContent = c.def;
+  backEx.textContent  = c.ex;
+  backTip.textContent = c.tip;
+  backTip.style.display = c.tip ? "block" : "none";
+
+  counter.textContent = (idx + 1) + " / " + CARDS.length;
+  cardEl.classList.remove("flipped");
+}
+
+function next(){ idx = (idx + 1) % CARDS.length; renderCard(); }
+function prev(){ idx = (idx - 1 + CARDS.length) % CARDS.length; renderCard(); }
+
+cardEl.addEventListener("click", () => cardEl.classList.toggle("flipped"));
+document.getElementById("nextBtn").addEventListener("click", next);
+document.getElementById("prevBtn").addEventListener("click", prev);
+document.getElementById("flipBtn").addEventListener("click", () => cardEl.classList.toggle("flipped"));
+document.getElementById("shuffleBtn").addEventListener("click", () => {
+  order = shuffle(order); idx = 0; renderCard();
+});
+
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  if (!document.getElementById("p-cards").classList.contains("active")) return;
+  if (e.key === "ArrowRight") next();
+  if (e.key === "ArrowLeft")  prev();
+  if (e.key === " " || e.key === "Enter"){ e.preventDefault(); cardEl.classList.toggle("flipped"); }
+});
+
+/* =========================================================
+   4. TABS
+   ========================================================= */
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById(tab.dataset.panel).classList.add("active");
+  });
+});
+
+/* =========================================================
+   5. ACTIVITY 1 — MATCHING (columns swap with the deck)
+   ========================================================= */
+const PAIRS = [
+  { id: 1,  term: "fortune",                 ru: "удача; состояние; предсказание" },
+  { id: 2,  term: "fortune teller",          ru: "гадалка, предсказатель судьбы" },
+  { id: 3,  term: "tension",                 ru: "напряжение" },
+  { id: 4,  term: "tensed up",               ru: "напрягся, напряжённый" },
+  { id: 5,  term: "hard to deal with",       ru: "с ним трудно иметь дело / сложно общаться" },
+  { id: 6,  term: "a difficult personality", ru: "сложный характер" },
+  { id: 7,  term: "bear in mind",            ru: "иметь в виду, учитывать" },
+  { id: 8,  term: "bear with me",            ru: "потерпите немного, будьте терпеливы" },
+  { id: 9,  term: "alien invasion",          ru: "вторжение инопланетян" },
+  { id: 10, term: "broadcast",               ru: "транслировать, трансляция" },
+  { id: 11, term: "braid",                   ru: "заплетать волосы (в косу)" }
+];
+
+const leftCol  = document.getElementById("matchLeft");
+const rightCol = document.getElementById("matchRight");
+const scoreEl  = document.getElementById("matchScore");
+const matchSub = document.getElementById("matchSub");
+
+let selected = null;
+let matchedCount = 0;
+
+function buildMatch(){
+  leftCol.innerHTML = "";
+  rightCol.innerHTML = "";
+  selected = null;
+  matchedCount = 0;
+  updateMatchScore();
+
+  // In EN→RU deck: left = English, right = Russian
+  // In RU→EN deck: left = Russian, right = English
+  const leftKey  = (deck === "ru-en") ? "ru"   : "term";
+  const rightKey = (deck === "ru-en") ? "term" : "ru";
+
+  matchSub.textContent = deck === "en-ru"
+    ? "Match each English expression on the left with its Russian translation on the right."
+    : "Соедините русский перевод слева с английским выражением справа.";
+
+  shuffle(PAIRS).forEach(p => {
+    const b = document.createElement("button");
+    b.className = "m-item";
+    b.textContent = p[leftKey];
+    b.addEventListener("click", () => pick(b, "L", p.id));
+    leftCol.appendChild(b);
+  });
+
+  shuffle(PAIRS).forEach(p => {
+    const b = document.createElement("button");
+    b.className = "m-item";
+    b.textContent = p[rightKey];
+    b.addEventListener("click", () => pick(b, "R", p.id));
+    rightCol.appendChild(b);
+  });
+}
+
+function pick(el, side, id){
+  if (el.classList.contains("matched")) return;
+
+  if (!selected || selected.side === side){
+    if (selected) selected.el.classList.remove("sel");
+    selected = { el, side, id };
+    el.classList.add("sel");
+    return;
+  }
+
+  if (selected.id === id){
+    selected.el.classList.remove("sel");
+    selected.el.classList.add("matched");
+    el.classList.add("matched");
+    selected = null;
+    matchedCount++;
+    updateMatchScore();
+  } else {
+    const first = selected;
+    selected = null;
+    el.classList.add("wrong");
+    first.el.classList.add("wrong");
+    setTimeout(() => {
+      el.classList.remove("wrong");
+      first.el.classList.remove("wrong", "sel");
+    }, 560);
+  }
+}
+
+function updateMatchScore(){
+  scoreEl.textContent = matchedCount + " / " + PAIRS.length + " matched";
+  if (matchedCount === PAIRS.length){
+    scoreEl.textContent = "🎉 Perfect! " + PAIRS.length + " / " + PAIRS.length + " matched";
+  }
+}
+
+document.getElementById("matchReset").addEventListener("click", buildMatch);
+
+/* =========================================================
+   6. ACTIVITY 2 — GAP FILL
+   ========================================================= */
+const GAPS = [
+  { pre: "Please ",                     post: " in mind that the exam starts at 8 sharp.",    ans: "bear",        ru: "Пожалуйста, имейте в виду, что экзамен начинается ровно в 8." },
+  { pre: "Just ",                       post: " with me for a second — I'm opening the file.", ans: "bear",        ru: "Просто потерпите секунду — я открываю файл." },
+  { pre: "The fortune ",                post: " told me I would travel across the sea.",      ans: "teller",      ru: "Гадалка сказала мне, что я пересеку море." },
+  { pre: "There was a lot of ",         post: " in the room before the results came out.",    ans: "tension",     ru: "В комнате было большое напряжение перед объявлением результатов." },
+  { pre: "I ",                          post: " up the moment I heard the door open.",        ans: "tensed",      ru: "Я напрягся в тот момент, когда услышал, как открывается дверь." },
+  { pre: "She made a ",                 post: " selling handmade jewellery online.",          ans: "fortune",     ru: "Она заработала состояние, продавая украшения ручной работы онлайн." },
+  { pre: "The match will be ",          post: " live on Saturday evening.",                   ans: "broadcast",   ru: "Матч будет транслироваться в прямом эфире в субботу вечером." },
+  { pre: "He's hard to deal ",          post: " when he's tired.",                            ans: "with",        ru: "С ним трудно иметь дело, когда он устал." },
+  { pre: "My sister taught me how to ", post: " my hair.",                                    ans: "braid",       ru: "Сестра научила меня заплетать волосы." },
+  { pre: "The film is about an alien ", post: " of the planet.",                              ans: "invasion",    ru: "Фильм о вторжении инопланетян на планету." },
+  { pre: "He has a difficult ",         post: " — he hates being told what to do.",           ans: "personality", ru: "У него сложный характер — он ненавидит, когда ему указывают, что делать." }
+];
+
+const BANK = ["Bear","with","teller","tension","tensed","fortune","broadcast","braid","invasion","personality"];
+const bankEl = document.getElementById("wordBank");
+const gapList = document.getElementById("gapList");
+const feedback = document.getElementById("feedback");
+
+function buildGaps(){
+  bankEl.innerHTML = "";
+  BANK.forEach(w => {
+    const s = document.createElement("span");
+    s.textContent = w;
+    bankEl.appendChild(s);
+  });
+
+  gapList.innerHTML = "";
+  GAPS.forEach((g, i) => {
+    const p = document.createElement("div");
+    p.className = "gap";
+
+    const num = document.createElement("span");
+    num.className = "num";
+    num.textContent = (i + 1) + ".";
+
+    const pre = document.createElement("span");
+    pre.textContent = g.pre;
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.autocomplete = "off";
+    input.spellcheck = false;
+    input.dataset.answer = g.ans;
+    input.setAttribute("aria-label", "gap " + (i + 1));
+
+    const post = document.createElement("span");
+    post.textContent = g.post;
+
+    p.append(num, pre, input, post);
+    gapList.appendChild(p);
+
+    // Russian translation of the full sentence — shown only in RU→EN deck
+    const ruDiv = document.createElement("div");
+    ruDiv.className = "gap-ru";
+    ruDiv.textContent = g.ru;
+    ruDiv.style.display = (deck === "ru-en") ? "block" : "none";
+    gapList.appendChild(ruDiv);
+  });
+  feedback.textContent = "";
+}
+
+function checkGaps(){
+  const inputs = gapList.querySelectorAll("input");
+  let score = 0;
+  inputs.forEach(inp => {
+    const val = inp.value.trim().toLowerCase();
+    const ans = inp.dataset.answer.toLowerCase();
+    inp.classList.remove("correct", "incorrect");
+    if (val === ans){
+      inp.classList.add("correct");
+      score++;
+    } else {
+      inp.classList.add("incorrect");
+    }
+  });
+  feedback.textContent = "You got " + score + " / " + inputs.length + " right." +
+    (score === inputs.length ? " 🎉 Perfect!" : " Try the red ones again.");
+}
+
+document.getElementById("checkBtn").addEventListener("click", checkGaps);
+
+document.getElementById("showBtn").addEventListener("click", () => {
+  gapList.querySelectorAll("input").forEach(inp => {
+    inp.value = inp.dataset.answer;
+    inp.classList.remove("incorrect");
+    inp.classList.add("correct");
+  });
+  feedback.textContent = "Answers shown — now try again from memory!";
+});
+
+document.getElementById("gapReset").addEventListener("click", buildGaps);
+
+gapList.addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); checkGaps(); }
+});
+
+/* =========================================================
+   7. DECK SWITCHER
+   ========================================================= */
+function setDeck(newDeck){
+  deck = newDeck;
+  document.getElementById("deckEnRu").classList.toggle("active", deck === "en-ru");
+  document.getElementById("deckRuEn").classList.toggle("active", deck === "ru-en");
+
+  // Flash cards reset to front
+  renderCard();
+
+  // Match activity: columns swap
+  buildMatch();
+
+  // Gap fill: show / hide Russian hints
+  gapList.querySelectorAll(".gap-ru").forEach(d => {
+    d.style.display = (deck === "ru-en") ? "block" : "none";
+  });
+}
+
+document.getElementById("deckEnRu").addEventListener("click", () => setDeck("en-ru"));
+document.getElementById("deckRuEn").addEventListener("click", () => setDeck("ru-en"));
+
+/* =========================================================
+   8. INIT
+   ========================================================= */
+renderCard();
+buildMatch();
+buildGaps();
+</script>
+</body>
+</html>
